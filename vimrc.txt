@@ -1,0 +1,35 @@
+
+" Specify a directory for plugins
+" - For Neovim: stdpath('data') . '/plugged'
+" - Avoid using standard Vim directory names like 'plugin'
+call plug#begin('~/.vim/plugged')
+    Plug 'prettier/vim-prettier', { 'do': 'npm install' }
+    Plug 'preservim/nerdtree'
+call plug#end()
+" tabs are 4 spaces
+filetype plugin indent on
+set tabstop=4
+set shiftwidth=4
+set expandtab
+"color scheme and syntax
+syntax enable
+colorscheme apprentice
+"show matching brackets and line numbers
+set showmatch
+set number
+"auto close brackets
+inoremap " ""<left>
+inoremap ' ''<left>
+inoremap ( ()<left>
+inoremap [ []<left>
+inoremap { {}<left>
+inoremap < <><left>
+"allow :find to check subdirectories
+set path+=**
+":find * for fuzzy finders
+set wildmenu
+" number of spaces per indentation level
+" Prettier default: 2
+let g:prettier#config#tab_width = 4
+" Map crtl-n to NERDTree Toggle
+map <C-n> :NERDTreeToggle<CR>

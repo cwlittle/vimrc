@@ -1,11 +1,46 @@
-
-" Specify a directory for plugins
-" - For Neovim: stdpath('data') . '/plugged'
-" - Avoid using standard Vim directory names like 'plugin'
-call plug#begin('~/.vim/plugged')
-    Plug 'prettier/vim-prettier', { 'do': 'npm install' }
+call plug#begin()
     Plug 'preservim/nerdtree'
+    Plug 'itchyny/lightline.vim'
+    Plug 'itchyny/vim-gitbranch'
+    "Plug 'sheerun/vim-polyglot'
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    Plug 'rust-lang/rust.vim'
+    Plug 'tpope/vim-commentary'
 call plug#end()
+
+"vim-commentary
+"gc default to comment blocks selected by visual line
+
+"set up rust.vim
+let g:rustfmt_autosave = 1
+let g:rustfmt_command = "rustup run nightly rustfmt"
+
+"set up lightline
+let g:lightline = {
+      \ 'colorscheme': 'apprentice',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste'],
+      \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+      \ },
+      \ 'component_function': {
+      \   'gitbranch': 'gitbranch#name'
+      \ },
+      \ }
+
+" Start NERDTree. If a file is specified, move the cursor to its window.
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * NERDTree | if argc() > 0 || exists("s:std_in") | wincmd p | endif
+" If another buffer tries to replace NERDTree, put it in the other window, and bring back NERDTree.
+autocmd BufEnter * if bufname('#') =~ 'NERD_tree_\d\+' && bufname('%') !~ 'NERD_tree_\d\+' && winnr('$') > 1 |
+    \ let buf=bufnr() | buffer# | execute "normal! \<C-W>w" | execute 'buffer'.buf | endif
+" If NERDTree is the last window, automatically close it
+autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() |
+    \ quit | endif
+" Make NERDTree show hidden files
+let NERDTreeShowHidden=1
+"Tab and S-Tab to navigate completion
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " tabs are 4 spaces
 filetype plugin indent on
 set tabstop=4
@@ -14,22 +49,83 @@ set expandtab
 "color scheme and syntax
 syntax enable
 colorscheme apprentice
-"show matching brackets and line numbers
+"show matching brackets
 set showmatch
-set number
+"set hybrid numbers
+set number relativenumber
 "auto close brackets
-inoremap " ""<left>
-inoremap ' ''<left>
 inoremap ( ()<left>
 inoremap [ []<left>
 inoremap { {}<left>
-inoremap < <><left>
+"inoremap < <><left>
+"inoremap { <C-O>:call YourFirstPlugin("{")<CR>
+"map ; to :
+noremap ; :
 "allow :find to check subdirectories
 set path+=**
 ":find * for fuzzy finders
 set wildmenu
-" number of spaces per indentation level
-" Prettier default: 2
-let g:prettier#config#tab_width = 4
-" Map crtl-n to NERDTree Toggle
+"set NerdTree Toggle to ctrl-n
 map <C-n> :NERDTreeToggle<CR>
+"set ctrl-hjkl to change windows
+noremap <C-h> <C-w>h
+noremap <C-j> <C-w>j
+noremap <C-k> <C-w>k
+noremap <C-l> <C-w>l
+"set crtl-yuio to modify window sizes
+"need to rethink these because tab is <C-i>
+"There isn't a way to disconnect the two
+noremap <C-u> <C-w>+
+noremap <C-i> <C-w>-
+
+"set Esc to leave terminal mode
+tnoremap <Esc> <C-\><C-n>
+
+"automatically open terminal split on open
+"set splitbelow
+"split | resize 1 | terminal
+"set nosplitbelow
+
+"toggle terminal size
+"function! ToggleTerm()
+"    let cur_bufnr = bufnr('%')
+"    let cur_winids = win_findbuf(cur_bufnr)
+"    let term_bufnr = bufnr('term')
+"    let term_winids = win_findbuf(term_bufnr)
+"    call win_gotoid(term_winids[0])
+"    let height = winheight(term_winids[0])
+"    if height == 1
+"        execute 'resize' . 15
+"    else
+"        execute 'resize' . 0
+"    endif
+"    call win_gotoid(cur_winids[0])
+"endfunction
+"noremap <C-m> :call ToggleTerm()<CR>
+
+"rust analyzer go-to definition and go-back
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gb <C-o>
+
+"rust show documentation on function
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+
+nnoremap <silent> gh :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  else
+    call CocAction('doHover')
+  endif
+endfunction
+
+"Use ctrl-space to trigger coc completion
+inoremap <silent><expr> <c-space> coc#refresh()
+
+"Enter for choose autocomplete
+inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "<C-y>" : "<C-g>u<CR>"
+"Set spellcheck for .md files
+autocmd BufRead,BufNewFile *.md setlocal spell
+
